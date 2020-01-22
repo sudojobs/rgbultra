@@ -4,29 +4,71 @@ import os
 import signal
 import sys
 
-class RGBLEDs:
-	RED = 13
-	YELLOW = 26
-	GREEN = 19
+
+RED   = 11
+GREEN = 15
+BLUE  = 13
+
+DELAY = 30
 
 class LEDStates:
-        INIT   = 1
-	GREEN  = 2
-	YELLOW = 3
-	RED    = 4
+    INIT   = 1
+    GREEN  = 2
+    YELLOW = 3
+    RED    = 4
 
-GPIO_ECHO = 24
-GPIO_TRIGGER = 23
+GPIO_ECHO = 18
+GPIO_TRIGGER = 16
 
 currentState = LEDStates.INIT
 count  = 0
 pre_val= 0
 debug  = 1
-GPIO.setmode(GPIO.BCM)
+GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 GPIO.setup(GPIO_ECHO,GPIO.IN)
 GPIO.setup(GPIO_TRIGGER,GPIO.OUT)
 
+def blink(pin):
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(pin, GPIO.OUT)
+    GPIO.output(pin, GPIO.HIGH)
+    
+def turnOff(pin):
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(pin, GPIO.OUT)
+    GPIO.output(pin, GPIO.LOW)
+
+def redOn():
+    blink(RED)
+
+def redOff():
+    turnOff(RED)
+
+def greenOn():
+    blink(GREEN)
+
+def greenOff():
+    turnOff(GREEN)
+
+def yellowOn():
+    blink(RED)
+    blink(GREEN)
+
+def yellowOff():
+    turnOff(RED)
+    turnOff(GREEN)
+	
+def blueOff():
+    turnOff(BLUE)
+
+def blueOn():
+    blink(BLUE)
+	
+def allOff():
+    turnOff(RED)
+    turnOff(GREEN)
+    turnOff(BLUE)
 
 def distance():
     # set Trigger to HIGH
@@ -54,6 +96,7 @@ def distance():
     distance = (TimeElapsed * 34300) / 2
     return distance
 
+allOff()
 try:
   while True:
         val=round(distance(),0)
@@ -67,41 +110,39 @@ try:
         count=count + 1
         if (currentState == LEDStates.INIT):
 	     # Setup Hardware
-             GPIO.setup(RGBLEDs.RED, GPIO.OUT)
-             GPIO.setup(RGBLEDs.YELLOW, GPIO.OUT)
-             GPIO.setup(RGBLEDs.GREEN, GPIO.OUT)
+             greenOn()
              currentState = LEDStates.GREEN
         elif (currentState == LEDStates.GREEN):
-	     GPIO.output(RGBLEDs.RED, True)
-	     GPIO.output(RGBLEDs.YELLOW, False)
-	     GPIO.output(RGBLEDs.GREEN, True)
-             if (count == 31):
-		currentState = LEDStates.YELLOW
-                count = 0
-             elif(abs_val>2):
-		currentState = LEDStates.GREEN
-                count = 0
+	         redOff()
+		 yellowOff()
+		 greenOn()
+                 if (count == DELAY):
+		     currentState = LEDStates.YELLOW
+                     count = 0
+                 elif(abs_val>2):
+		     currentState = LEDStates.GREEN
+                     count = 0
         elif (currentState == LEDStates.YELLOW):
-	     GPIO.output(RGBLEDs.RED, True)
-	     GPIO.output(RGBLEDs.YELLOW, True)
-	     GPIO.output(RGBLEDs.GREEN, False)
-             if (count == 31):
-	         currentState = LEDStates.RED
-                 count = 0
-             elif (abs_val>2):
-	         currentState = LEDStates.GREEN
-                 count = 0
-             else:
-		 currentState = LEDStates.YELLOW
+	         redOff()
+		 greenOff()
+		 yellowOn()
+                 if (count == DELAY):
+	             currentState = LEDStates.RED
+                     count = 0
+                 elif (abs_val>2):
+	             currentState = LEDStates.GREEN
+                     count = 0
+                 else:
+		     currentState = LEDStates.YELLOW
 	elif (currentState == LEDStates.RED):
-		GPIO.output(RGBLEDs.RED, False)
-		GPIO.output(RGBLEDs.YELLOW, True)
-		GPIO.output(RGBLEDs.GREEN, True)
-                if (abs_val>2):
-		   currentState = LEDStates.GREEN
-                   count = 0
-                else: 
-		   currentState = LEDStates.RED
+		   yellowOff()
+		   greenOff()
+		   redOn()
+                   if (abs_val>3):
+		       currentState = LEDStates.GREEN
+                       count = 0
+                   else: 
+		       currentState = LEDStates.RED
 		
 	else:
 		print 'Invalid state!'
